@@ -281,6 +281,7 @@ async def corona(ctx, *args):
 
 @bot.event
 async def on_ready():
+    print("Hello. I am your bot and I am ready to operate!")
     weather_update.start()
 
 bot.run(TOKEN)
