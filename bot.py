@@ -159,7 +159,7 @@ async def weather(ctx, *args):
                 time_loc = ret.split("\n")[1]
                 weather_out = ret.split("\n")[0]
                 await bot.change_presence(activity=discord.Game(str(arg1).capitalize() + ": " + weather_out))
-                command = command + arg1 + " " + arg2
+                
 
             embed = discord.Embed(title=title, color=discord.Color.green())
             embed.set_thumbnail(url=img)
