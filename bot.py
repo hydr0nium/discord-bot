@@ -309,6 +309,7 @@ def log(username,command):
 
 @bot.event
 async def on_ready():
+    print("Hello. I am your bot and I am ready to operate!")
     weather_update.start()
 
 bot.run(TOKEN)
