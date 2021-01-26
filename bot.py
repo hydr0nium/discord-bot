@@ -294,7 +294,7 @@ async def corona(ctx, *args):
         embed.add_field(name="Vaccinations: ", value=impfungen, inline=True)
         embed.set_thumbnail(url=corona_img)
         await ctx.send(embed=embed)
-        command = command + "numbers de/" + str(args[1])
+        command = command + "numbers " + str(args[1])
 
     log(username, command)
 
