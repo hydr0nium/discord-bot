@@ -9,11 +9,12 @@ import datetime
 import time
 import random
 
-file = open("../token.txt","r")
-TOKEN = str(file.read())
+TOKEN = "<TOKEN>"
 language = "en"
 location = "Deutschland"
 bot = commands.Bot(command_prefix="!")
+log_path = "../log.txt"
+
 
 
 
@@ -121,6 +122,8 @@ async def weather_update():
 async def weather(ctx, *args):
     global language
     global location
+    username = ctx.author.name
+    command = "!weather "
     usage = "Usage: !weather <location> <en/de> \nLanguage is optional\nReturns the weather for the location in the choosen language"
     title = "Weather in Juicy Town"
     tim = "Juicy Time"
@@ -139,12 +142,14 @@ async def weather(ctx, *args):
                 title = "Weather in "
                 temp = "Temperature"
                 tim = "Local Time"
+                command = command + arg1 + " en"
 
             if arg2 == "de":
                 language = "de"
                 title = "Wetter in "
                 temp = "Temperatur"
                 tim = "Lokale Uhrzeit"
+                command = command + arg1 + " de"
 
             if ret != "Your supplied location was not in our list or wrongly supplied!\n":
                 location = str(arg1).capitalize()
@@ -153,6 +158,7 @@ async def weather(ctx, *args):
                 time_loc = ret.split("\n")[1]
                 weather_out = ret.split("\n")[0]
                 await bot.change_presence(activity=discord.Game(str(arg1).capitalize() + ": " + weather_out))
+                command = command + arg1 + " " + arg2
 
             embed = discord.Embed(title=title, color=discord.Color.green())
             embed.set_thumbnail(url=img)
@@ -160,8 +166,10 @@ async def weather(ctx, *args):
             embed.add_field(name=tim, value=time_loc, inline=True)
             await ctx.send(embed=embed)
 
+
         else:
             await ctx.send("Please use a valid language option! For help see !weather")
+            command = command + arg1 + " " + arg2
 
     elif len(args) == 1:
         arg1 = args[0]
@@ -176,6 +184,8 @@ async def weather(ctx, *args):
                 title = "Wetter in "
                 temp = "Temperatur"
                 tim = "Lokale Uhrzeit"
+
+            command = command + arg1
             location = str(arg1).capitalize()
             title = title + location
             img = get_weather_img(ret)
@@ -191,6 +201,7 @@ async def weather(ctx, *args):
 
     elif len(args) == 0:
         await ctx.send(usage)
+    log(username, command)
 
 # ---------------------------------------------------------------------------------------------
 def parse_corona(string):
@@ -204,6 +215,10 @@ def parse_corona(string):
 @bot.command(pass_context=True, brief="Prints the current corona numbers for some given parameters")
 @commands.cooldown(1, 0, commands.BucketType.user)
 async def corona(ctx, *args):
+
+    username = str(ctx.author.name)
+    command = "!corona "
+
     corona_img = "https://cdn.cnn.com/cnnnext/dam/assets/200130165125-corona-virus-cdc-image-super-tease.jpg"
     dic = {"de/saar": "saarland", "de/thr": "thüringen", "de/saan": "sachen-anhalt", "de/bra": "brandenburg",
            "de/sa": "sachsen", "de/he": "hessen", "de/ber": "berlin", "de/bay": "bayern", "de/meckpom": "mecklenburg-vorpommern",
@@ -224,6 +239,7 @@ async def corona(ctx, *args):
         embed.add_field(name="Deaths:", value=deaths, inline=True)
         embed.set_thumbnail(url=corona_img)
         await ctx.send(embed=embed)
+        command = command + "numbers"
 
     elif len(args) == 2 and args[0] == "numbers" and args[1] == "de":
         req = requests.get("https://www.corona-in-zahlen.de/weltweit/deutschland/")
@@ -251,6 +267,8 @@ async def corona(ctx, *args):
         embed.add_field(name="All tests done: ", value=tests_insgesamt, inline=True)
         embed.set_thumbnail(url=corona_img)
         await ctx.send(embed=embed)
+        command = command + "numbers de"
+
     elif len(args) == 2 and args[0] == "numbers" and args[1] in dic:
         bundesland = dic.get(args[1])
         req = requests.get("https://www.corona-in-zahlen.de/bundeslaender/" + bundesland)
@@ -275,14 +293,21 @@ async def corona(ctx, *args):
         embed.add_field(name="Vaccinations: ", value=impfungen, inline=True)
         embed.set_thumbnail(url=corona_img)
         await ctx.send(embed=embed)
+        command = command + "numbers de/" + str(args[1])
+
+    log(username, command)
 
 
-
+def log(username,command):
+    global log_path
+    file = open(log_path,"a")
+    time_now = str(datetime.datetime.now()).split(".")[0]
+    out = "[" + time_now + "] " + username + ": " + command + "\n"
+    file.write(out)
 
 
 @bot.event
 async def on_ready():
-    print("Hello. I am your bot and I am ready to operate!")
     weather_update.start()
 
 bot.run(TOKEN)
