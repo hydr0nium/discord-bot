@@ -9,7 +9,8 @@ import datetime
 import time
 import random
 
-TOKEN = "<TOKEN>"
+file = open("../token.txt","r")
+TOKEN = str(file.read())
 language = "en"
 location = "Deutschland"
 bot = commands.Bot(command_prefix="!")
