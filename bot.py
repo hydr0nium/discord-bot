@@ -15,6 +15,8 @@ language = "en"
 location = "Deutschland"
 bot = commands.Bot(command_prefix="!")
 log_path = "../log.txt"
+last_update = ""
+vaccinations = 0
 
 
 
@@ -212,22 +214,27 @@ def parse_corona(string):
     return string
 
 def get_imf_deutsch():
-    ret = 0
+    global vaccinations
+    ret = vaccinations
+    global last_update
     dic = {"de/saar": "saarland", "de/thr": "thüringen", "de/saan": "sachsen-anhalt", "de/bra": "brandenburg",
            "de/sa": "sachsen", "de/he": "hessen", "de/ber": "berlin", "de/bay": "bayern",
            "de/meckpom": "mecklenburg-vorpommern",
            "de/nrw": "nordrhein-westfalen", "de/shs": "schleswig-holstein", "de/rlp": "rheinland-pfalz",
            "de/bwb": "baden-württemberg", "de/ns": "niedersachsen", "de/ham": "hamburg", "de/bre": "bremen"}
-    for b in dic:
-        bundesland = dic.get(b)
-        req = requests.get("https://www.corona-in-zahlen.de/bundeslaender/" + bundesland)
-        html_data = req.text
-        parsed = BeautifulSoup(html_data, "html.parser")
-        numbers_a = parsed.find_all("p", "card-title")
-        impfungen = parse_corona(str(numbers_a[7]))
-        impfungen = impfungen.replace(".", "")
-        print(impfungen)
-        ret = ret + int(impfungen)
+    if datetime.date != last_update:
+        ret = 0
+        for b in dic:
+            bundesland = dic.get(b)
+            req = requests.get("https://www.corona-in-zahlen.de/bundeslaender/" + bundesland)
+            html_data = req.text
+            parsed = BeautifulSoup(html_data, "html.parser")
+            numbers_a = parsed.find_all("p", "card-title")
+            impfungen = parse_corona(str(numbers_a[7]))
+            impfungen = impfungen.replace(".", "")
+            print(impfungen)
+            ret = ret + int(impfungen)
+        vaccinations = datetime.date
 
     return ret
 
