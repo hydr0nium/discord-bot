@@ -213,7 +213,7 @@ def parse_corona(string):
 
 def get_imf_deutsch():
     ret = 0
-    dic = {"de/saar": "saarland", "de/thr": "thüringen", "de/saan": "sachen-anhalt", "de/bra": "brandenburg",
+    dic = {"de/saar": "saarland", "de/thr": "thüringen", "de/saan": "sachsen-anhalt", "de/bra": "brandenburg",
            "de/sa": "sachsen", "de/he": "hessen", "de/ber": "berlin", "de/bay": "bayern",
            "de/meckpom": "mecklenburg-vorpommern",
            "de/nrw": "nordrhein-westfalen", "de/shs": "schleswig-holstein", "de/rlp": "rheinland-pfalz",
