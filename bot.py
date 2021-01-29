@@ -239,7 +239,7 @@ async def corona(ctx, *args):
     command = "!corona "
 
     corona_img = "https://cdn.cnn.com/cnnnext/dam/assets/200130165125-corona-virus-cdc-image-super-tease.jpg"
-    dic = {"de/saar": "saarland", "de/thr": "thüringen", "de/saan": "sachen-anhalt", "de/bra": "brandenburg",
+    dic = {"de/saar": "saarland", "de/thr": "thüringen", "de/saan": "sachsen-anhalt", "de/bra": "brandenburg",
            "de/sa": "sachsen", "de/he": "hessen", "de/ber": "berlin", "de/bay": "bayern", "de/meckpom": "mecklenburg-vorpommern",
            "de/nrw": "nordrhein-westfalen", "de/shs": "schleswig-holstein", "de/rlp": "rheinland-pfalz",
            "de/bwb": "baden-württemberg", "de/ns": "niedersachsen", "de/ham": "hamburg", "de/bre": "bremen"}
