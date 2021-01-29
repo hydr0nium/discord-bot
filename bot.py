@@ -219,8 +219,8 @@ def get_imf_deutsch():
            "de/nrw": "nordrhein-westfalen", "de/shs": "schleswig-holstein", "de/rlp": "rheinland-pfalz",
            "de/bwb": "baden-württemberg", "de/ns": "niedersachsen", "de/ham": "hamburg", "de/bre": "bremen"}
     for b in dic:
-        print(b)
-        req = requests.get("https://www.corona-in-zahlen.de/bundeslaender/" + b)
+        bundesland = dic.get(b)
+        req = requests.get("https://www.corona-in-zahlen.de/bundeslaender/" + bundesland)
         html_data = req.text
         parsed = BeautifulSoup(html_data, "html.parser")
         numbers_a = parsed.find_all("p", "card-title")
