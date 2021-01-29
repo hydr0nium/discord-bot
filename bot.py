@@ -126,12 +126,12 @@ async def weather(ctx, *args):
     username = ctx.author.name
     command = "!weather "
     usage = "Usage: !weather <location> <en/de> \nLanguage is optional\nReturns the weather for the location in the choosen language"
-    title = "Weather in Juicy Town"
-    tim = "Juicy Time"
-    time_loc = "69:69:69"
+    title = "Ehmmmm"
+    tim = "The cake is a lie?!"
+    time_loc = "69 Nice"
     img = "https://cdn.discordapp.com/emojis/550697172039893054.png?v=1"
     weather_out = "WTF IS WRONG WITH YOU?!"
-    temp = "69 Ways to get fucked"
+    temp = "404 ad missing or is it?"
 
     if len(args) == 2:
         arg1 = args[0]
@@ -159,7 +159,6 @@ async def weather(ctx, *args):
                 time_loc = ret.split("\n")[1]
                 weather_out = ret.split("\n")[0]
                 await bot.change_presence(activity=discord.Game(str(arg1).capitalize() + ": " + weather_out))
-                
 
             embed = discord.Embed(title=title, color=discord.Color.green())
             embed.set_thumbnail(url=img)
@@ -212,6 +211,25 @@ def parse_corona(string):
     string = string[::-1]
     return string
 
+def get_imf_deutsch():
+    ret = 0
+    dic = {"de/saar": "saarland", "de/thr": "thüringen", "de/saan": "sachen-anhalt", "de/bra": "brandenburg",
+           "de/sa": "sachsen", "de/he": "hessen", "de/ber": "berlin", "de/bay": "bayern",
+           "de/meckpom": "mecklenburg-vorpommern",
+           "de/nrw": "nordrhein-westfalen", "de/shs": "schleswig-holstein", "de/rlp": "rheinland-pfalz",
+           "de/bwb": "baden-württemberg", "de/ns": "niedersachsen", "de/ham": "hamburg", "de/bre": "bremen"}
+    for b in dic:
+        req = requests.get("https://www.corona-in-zahlen.de/bundeslaender/" + b)
+        html_data = req.text
+        parsed = BeautifulSoup(html_data, "html.parser")
+        numbers_a = parsed.find_all("p", "card-title")
+        impfungen = parse_corona(str(numbers_a[7]))
+        ret = ret + int(impfungen)
+    
+    return ret
+
+
+
 
 @bot.command(pass_context=True, brief="Prints the current corona numbers for some given parameters")
 @commands.cooldown(1, 0, commands.BucketType.user)
@@ -225,8 +243,7 @@ async def corona(ctx, *args):
            "de/sa": "sachsen", "de/he": "hessen", "de/ber": "berlin", "de/bay": "bayern", "de/meckpom": "mecklenburg-vorpommern",
            "de/nrw": "nordrhein-westfalen", "de/shs": "schleswig-holstein", "de/rlp": "rheinland-pfalz",
            "de/bwb": "baden-württemberg", "de/ns": "niedersachsen", "de/ham": "hamburg", "de/bre": "bremen"}
-    if len(args) == 0:
-        await ctx.send("Usage: !corona <numbers> <de, de/srl, de/thr> for showing the current cases and deaths")
+
     if len(args) == 1 and args[0] == "numbers":
 
         req = requests.get("https://www.worldometers.info/coronavirus/")
@@ -256,6 +273,7 @@ async def corona(ctx, *args):
         neuinfektionen = parse_corona(str(numbers_a[6]))
         new_deaths = parse_corona(str(numbers_a[8]))
         tests_insgesamt = parse_corona(str(numbers_a[9]))
+        impf_gesamt = get_imf_deutsch();
         embed = discord.Embed(title="Corona Numbers Germany", color=discord.Color.red())
         embed.add_field(name="Population:", value=einwohner, inline=True)
         embed.add_field(name="Infections:", value=infektionen, inline=True)
@@ -266,6 +284,7 @@ async def corona(ctx, *args):
         embed.add_field(name="New Infections: ", value=neuinfektionen, inline=True)
         embed.add_field(name="New Deaths: ", value=new_deaths, inline=True)
         embed.add_field(name="All tests done: ", value=tests_insgesamt, inline=True)
+        embed.add_field(name="All Vaccinations: ", value=impf_gesamt, inline=True)
         embed.set_thumbnail(url=corona_img)
         await ctx.send(embed=embed)
         command = command + "numbers de"
@@ -295,6 +314,8 @@ async def corona(ctx, *args):
         embed.set_thumbnail(url=corona_img)
         await ctx.send(embed=embed)
         command = command + "numbers " + str(args[1])
+    else:
+        await ctx.send("Usage: !corona <numbers> <de, de/srl, de/thr> for showing the current cases and deaths")
 
     log(username, command)
 
