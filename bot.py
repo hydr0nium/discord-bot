@@ -225,8 +225,7 @@ def get_imf_deutsch():
         parsed = BeautifulSoup(html_data, "html.parser")
         numbers_a = parsed.find_all("p", "card-title")
         impfungen = parse_corona(str(numbers_a[7]))
-        print(impfungen)
-        impfungen.replace(".", "")
+        impfungen = impfungen.replace(".", "")
         ret = ret + int(impfungen)
 
     return ret
