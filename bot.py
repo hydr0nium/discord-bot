@@ -226,6 +226,7 @@ def get_imf_deutsch():
         numbers_a = parsed.find_all("p", "card-title")
         impfungen = parse_corona(str(numbers_a[7]))
         impfungen = impfungen.replace(".", "")
+        print(impfungen)
         ret = ret + int(impfungen)
 
     return ret
