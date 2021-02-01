@@ -217,6 +217,7 @@ def get_imf_deutsch():
     global vaccinations
     ret = vaccinations
     global last_update
+    print(last_update)
     dic = {"de/saar": "saarland", "de/thr": "thüringen", "de/saan": "sachsen-anhalt", "de/bra": "brandenburg",
            "de/sa": "sachsen", "de/he": "hessen", "de/ber": "berlin", "de/bay": "bayern",
            "de/meckpom": "mecklenburg-vorpommern",
@@ -234,6 +235,7 @@ def get_imf_deutsch():
             impfungen = impfungen.replace(".", "")
             ret = ret + int(impfungen)
         last_update = datetime.date
+        print("Last_update updated to: " + str(datetime.date))
         vaccinations = ret
 
     return ret
