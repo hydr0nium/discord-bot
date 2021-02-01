@@ -157,7 +157,8 @@ async def weather(ctx, *args):
                 command = command + arg1 + " de"
 
             if ret == "The weather function is currently unavailable!":
-                embed = "The weather function is currently unavailable!"
+                embed = discord.Embed(title=title, color=discord.Color.green())
+                embed.add_field(name="ERROR", value="The weather function is currently unavailable!")
                 await ctx.send(embed=embed)
                 return
 
