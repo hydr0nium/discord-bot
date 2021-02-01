@@ -96,6 +96,7 @@ def weather_func(place, lang):
     # Generate Weather from place
     address = "https://darksky.net/forecast/"
     address = ""
+    return "The weather function is currently unavailable!"
     rep = requests.get(address + coords + "/ca24/" + lang)
     html = rep.text
     parsed = BeautifulSoup(html, "html.parser")
