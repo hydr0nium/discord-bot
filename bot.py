@@ -94,7 +94,9 @@ def weather_func(place, lang):
     coords = str(lat) + "," + str(lon)
     time_loc = get_time_from_location(lat, lon)
     # Generate Weather from place
-    rep = requests.get("https://darksky.net/forecast/" + coords + "/ca24/" + lang)
+    address = "https://darksky.net/forecast/"
+    address = ""
+    rep = requests.get(address + coords + "/ca24/" + lang)
     html = rep.text
     parsed = BeautifulSoup(html, "html.parser")
     weather_p = parsed.find_all("span", "summary swap")
@@ -108,16 +110,15 @@ def weather_func(place, lang):
 # ------------------------------------------------------------------------------------------------------------
 
 
-@tasks.loop(minutes=5)
+@tasks.loop(minutes=30)
 async def weather_update():
 
-    listOfGlobals = globals()
-    language_l = listOfGlobals['language']
-    location_l = listOfGlobals['location']
-    weather_status = weather_func(location_l, language_l)
+    global location
+    global language
+    weather_status = weather_func(location, language)
     weather_status = weather_status[:32:]
     weather_status = weather_status.split("\n")[0]
-    await bot.change_presence(activity=discord.Game(str(location_l).capitalize() + ": " + weather_status))
+    await bot.change_presence(activity=discord.Game(str(location).capitalize() + ": " + weather_status))
 
 
 @bot.command(pass_context=True, brief="Prints some weather data for some given parameters")
