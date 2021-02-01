@@ -232,11 +232,16 @@ def get_imf_deutsch():
             parsed = BeautifulSoup(html_data, "html.parser")
             numbers_a = parsed.find_all("p", "card-title")
             impfungen = parse_corona(str(numbers_a[7]))
-            impfungen = impfungen.replace(".", ",")
+            impfungen = impfungen.replace(".", "")
             ret = ret + int(impfungen)
         last_update = str(datetime.date.today())
         print("Last_update updated to: " + str(datetime.date.today()))
-        vaccinations = str(ret).replace(",",".")
+        ret = ret[::-1]
+        out = ""
+        for i in range(0, len(ret)-3, 3):
+            out = out + ret[i:i+3] + "."
+        out = out[::-1]
+        vaccinations = out
 
     return ret
 
