@@ -243,6 +243,8 @@ def get_imf_deutsch():
         out = ""
         for i in range(0, len(ret)-3, 3):
             out = out + ret[i:i+3] + "."
+        if not (len(ret)//3 == 0):
+            out = ret[len(ret)-(len(ret)//3):len(ret)]
         out = out[::-1]
         vaccinations = out
 
