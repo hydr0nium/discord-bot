@@ -244,7 +244,7 @@ def get_imf_deutsch():
         out = out[::-1]
         vaccinations = out
 
-    return ret
+    return vaccinations
 
 
 
