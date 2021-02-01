@@ -70,7 +70,7 @@ def get_weather_img(info_uncut):
 
 def parse_html(array, class_name):
     if len(array) == 0:
-        return 0.0
+        return "0.0"
     cut1 = str(array[0])[(13+len(class_name)+2)::]
     flipped = cut1[::-1]
     cut2 = flipped[8::]
