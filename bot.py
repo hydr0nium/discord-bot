@@ -223,7 +223,7 @@ def get_imf_deutsch():
            "de/meckpom": "mecklenburg-vorpommern",
            "de/nrw": "nordrhein-westfalen", "de/shs": "schleswig-holstein", "de/rlp": "rheinland-pfalz",
            "de/bwb": "baden-württemberg", "de/ns": "niedersachsen", "de/ham": "hamburg", "de/bre": "bremen"}
-    if datetime.date != last_update:
+    if str(datetime.date.today()) != last_update:
         ret = 0
         for b in dic:
             bundesland = dic.get(b)
@@ -232,11 +232,11 @@ def get_imf_deutsch():
             parsed = BeautifulSoup(html_data, "html.parser")
             numbers_a = parsed.find_all("p", "card-title")
             impfungen = parse_corona(str(numbers_a[7]))
-            impfungen = impfungen.replace(".", "")
+            impfungen = impfungen.replace(".", ",")
             ret = ret + int(impfungen)
-        last_update = datetime.date
-        print("Last_update updated to: " + str(datetime.date))
-        vaccinations = ret
+        last_update = str(datetime.date.today())
+        print("Last_update updated to: " + str(datetime.date.today()))
+        vaccinations = str(ret).replace(",",".")
 
     return ret
 
