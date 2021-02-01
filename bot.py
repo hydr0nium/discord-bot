@@ -237,6 +237,7 @@ def get_imf_deutsch():
         last_update = str(datetime.date.today())
         print("Last_update updated to: " + str(datetime.date.today()))
         ret = str(ret)
+        print(ret)
         ret = ret[::-1]
         out = ""
         for i in range(0, len(ret)-3, 3):
