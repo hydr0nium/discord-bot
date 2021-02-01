@@ -234,7 +234,6 @@ def get_imf_deutsch():
             impfungen = parse_corona(str(numbers_a[7]))
             impfungen = impfungen.replace(".", "")
             ret = ret + int(impfungen)
-            ret = 1855457
         last_update = str(datetime.date.today())
         #print("Last_update updated to: " + str(datetime.date.today()))
         ret = str(ret)
