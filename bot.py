@@ -156,13 +156,20 @@ async def weather(ctx, *args):
                 tim = "Lokale Uhrzeit"
                 command = command + arg1 + " de"
 
-            if ret != "Your supplied location was not in our list or wrongly supplied!\n":
+            if ret == "The weather function is currently unavailable!":
+                embed = "The weather function is currently unavailable!"
+                await ctx.send(embed=embed)
+                return
+
+            elif ret != "Your supplied location was not in our list or wrongly supplied!\n":
                 location = str(arg1).capitalize()
                 title = title + location
                 img = get_weather_img(ret)
                 time_loc = ret.split("\n")[1]
                 weather_out = ret.split("\n")[0]
                 await bot.change_presence(activity=discord.Game(str(arg1).capitalize() + ": " + weather_out))
+
+
 
             embed = discord.Embed(title=title, color=discord.Color.green())
             embed.set_thumbnail(url=img)
