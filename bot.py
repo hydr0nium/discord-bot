@@ -227,16 +227,16 @@ def get_imf_deutsch():
         ret = 0
         for b in dic:
             bundesland = dic.get(b)
-            #req = requests.get("https://www.corona-in-zahlen.de/bundeslaender/" + bundesland)
-            #html_data = req.text
-            #parsed = BeautifulSoup(html_data, "html.parser")
-            #numbers_a = parsed.find_all("p", "card-title")
-            #impfungen = parse_corona(str(numbers_a[7]))
-            #impfungen = impfungen.replace(".", "")
-            #ret = ret + int(impfungen)
+            req = requests.get("https://www.corona-in-zahlen.de/bundeslaender/" + bundesland)
+            html_data = req.text
+            parsed = BeautifulSoup(html_data, "html.parser")
+            numbers_a = parsed.find_all("p", "card-title")
+            impfungen = parse_corona(str(numbers_a[7]))
+            impfungen = impfungen.replace(".", "")
+            ret = ret + int(impfungen)
             ret = 1855457
         last_update = str(datetime.date.today())
-        print("Last_update updated to: " + str(datetime.date.today()))
+        #print("Last_update updated to: " + str(datetime.date.today()))
         ret = str(ret)
         print(ret)
         ret = ret[::-1]
