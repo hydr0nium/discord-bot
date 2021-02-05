@@ -65,7 +65,7 @@ def get_weather_img(info_uncut):
     else:
         ran = random.randint(1, 5000)
         print(ran)
-        return "https://www.univerzities.com/Images/Uni/logo"+ str(ran) + ".jpg"
+        return "https://www.univerzities.com/Images/Uni/logo" + str(ran) + ".jpg"
 
 
 def parse_html(array, class_name):
@@ -96,7 +96,7 @@ def weather_func(place, lang):
     # Generate Weather from place
     address = "https://darksky.net/forecast/"
     address = ""
-    return "The weather function is currently unavailable!"
+    #return "The weather function is currently unavailable!"
     rep = requests.get(address + coords + "/ca24/" + lang)
     html = rep.text
     parsed = BeautifulSoup(html, "html.parser")
@@ -225,9 +225,9 @@ def parse_corona(string):
 
 def get_imf_deutsch():
     global vaccinations
-    ret = vaccinations
     global last_update
-    print(last_update)
+    print("The last update was made: " + last_update)
+    print("The current date is: " + str(datetime.date.today()))
     dic = {"de/saar": "saarland", "de/thr": "thüringen", "de/saan": "sachsen-anhalt", "de/bra": "brandenburg",
            "de/sa": "sachsen", "de/he": "hessen", "de/ber": "berlin", "de/bay": "bayern",
            "de/meckpom": "mecklenburg-vorpommern",
@@ -245,7 +245,7 @@ def get_imf_deutsch():
             impfungen = impfungen.replace(".", "")
             ret = ret + int(impfungen)
         last_update = str(datetime.date.today())
-        #print("Last_update updated to: " + str(datetime.date.today()))
+
         ret = str(ret)
         print(ret)
         ret = ret[::-1]
