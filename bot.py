@@ -17,6 +17,7 @@ bot = commands.Bot(command_prefix="!")
 log_path = "../log.txt"
 last_update = ""
 vaccinations = 0
+DEBUG = 0
 
 
 
@@ -79,6 +80,7 @@ def parse_html(array, class_name):
 
 
 def weather_func(place, lang):
+    global DEBUG
     # Initialise lat,lon
     out = ""
     # Generate lat,long from place
@@ -95,8 +97,8 @@ def weather_func(place, lang):
     time_loc = get_time_from_location(lat, lon)
     # Generate Weather from place
     address = "https://darksky.net/forecast/"
-    address = ""
-    #return "The weather function is currently unavailable!"
+    if DEBUG == 1:
+         return "The weather function is currently unavailable!"
     rep = requests.get(address + coords + "/ca24/" + lang)
     html = rep.text
     parsed = BeautifulSoup(html, "html.parser")
