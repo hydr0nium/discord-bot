@@ -1,4 +1,3 @@
-
 import requests
 from bs4 import BeautifulSoup
 import discord
@@ -9,22 +8,20 @@ import datetime
 import time
 import random
 
-file = open("../token.txt","r")
-TOKEN = str(file.read())
-language = "en"
-location = "Deutschland"
-bot = commands.Bot(command_prefix="!")
-log_path = "../log.txt"
-last_update = ""
-vaccinations = 0
-DEBUG = 0
-
-
+file = open("../token.txt", "r")  # Opens a file for the token to be read
+TOKEN = str(file.read())  # Reads out the token from the token file for later use
+language = "en"  # Default language for the weather module
+location = "Deutschland"  # Default location for the weather module
+bot = commands.Bot(command_prefix="!")  # Setting the command prefix for the discord bot
+log_path = "../log.txt"  # Setting the path for the log file which logs all commands being used when and from whom
+last_update = ""  # String when the last update of the corona bot was made
+vaccinations = 0  # Number of Vaccinations made
+DEBUG = 0  # Debug Value if set it deactivates some functions
 
 
 # --------------------------------------------------------------------------------------------
 
-
+# Converting latitude and longitude to local time of that area
 def get_time_from_location(lat, lon):
     tf = TimezoneFinder()
     ret = tf.timezone_at(lng=float(lon), lat=float(lat))
@@ -36,6 +33,7 @@ def get_time_from_location(lat, lon):
     return loc_time
 
 
+# Getting an image for the bot to display for the current weather
 def get_weather_img(info_uncut):
     info = info_uncut.split("C ")[1].split("\n")[0]
     print(info)
@@ -63,167 +61,178 @@ def get_weather_img(info_uncut):
     elif "Leichter Regen möglich" in info:
         return "https://ssl.gstatic.com/onebox/weather/48/rain_s_cloudy.png"
 
-    else:
+    else:  # Some fun default case where it picks a random university image around the world
         ran = random.randint(1, 5000)
         print(ran)
         return "https://www.univerzities.com/Images/Uni/logo" + str(ran) + ".jpg"
 
 
-def parse_html(array, class_name):
-    if len(array) == 0:
+# Just some parser magic for the <span class="class_name">out</span> tag
+def parse_weather_html(array, class_name):
+    if len(array) == 0:  # If an empty string is parsed then this base case is used
         return "0.0"
-    cut1 = str(array[0])[(13+len(class_name)+2)::]
-    flipped = cut1[::-1]
-    cut2 = flipped[8::]
-    out = cut2[::-1]
-    return out
+    cut1 = str(array[0])[(13 + len(class_name) + 2)::]  # cut the first part with the class_name
+    flipped = cut1[::-1]  # flip all
+    cut2 = flipped[8::]  # cut the </span> at the end
+    out = cut2[::-1]  # flip back
+    return out  # return cutted string
 
 
+# Weather function to return the weather in either english or german for a place that is parsed to the function
 def weather_func(place, lang):
-    global DEBUG
-    # Initialise lat,lon
+    global DEBUG  # Debug value for deactivating the weather function
     out = ""
-    # Generate lat,long from place
+    # START Generate lat,long from place
+    # Some replacing for security purposes
     place = place.replace("/", "").replace(":", "").replace("@", "").replace(".", "")
+    # Request to website which converts place to lat / long
     rep2 = requests.get("http://www.geonames.org/search.html?q=" + place)
-    html2 = rep2.text
-    parsed2 = BeautifulSoup(html2, "html.parser")
-    lat_a = parsed2.find_all("span", "latitude")
-    lon_a = parsed2.find_all("span", "longitude")
+    html2 = rep2.text  # Convert reply to text string
+    parsed2 = BeautifulSoup(html2, "html.parser")  # Some HTML parsing magic
+    lat_a = parsed2.find_all("span", "latitude")  # Some HTML parsing magic
+    lon_a = parsed2.find_all("span", "longitude")  # Some HTML parsing magic
+    # END Generate lat,long from place
 
-    lat = parse_html(lat_a, "latitude")
-    lon = parse_html(lon_a, "longitude")
-    coords = str(lat) + "," + str(lon)
-    time_loc = get_time_from_location(lat, lon)
+    lat = parse_weather_html(lat_a, "latitude")  # remove span tag
+    lon = parse_weather_html(lon_a, "longitude")  # remove span tag
+    coords = str(lat) + "," + str(lon)  # Convert to the right format for the url to use it
+    time_loc = get_time_from_location(lat, lon)  # Get the local time for latitude and longitude
     # Generate Weather from place
-    address = "https://darksky.net/forecast/"
+    address = "https://darksky.net/forecast/"  # URL to convert between lat / long to weather
     if DEBUG == 1:
-         return "The weather function is currently unavailable!"
-    rep = requests.get(address + coords + "/ca24/" + lang)
-    html = rep.text
-    parsed = BeautifulSoup(html, "html.parser")
-    weather_p = parsed.find_all("span", "summary swap")
-    out = out + parse_html(weather_p, "summary swap")
-    out = out.replace("\xa0", "C ")
-    out = out + "\n" + time_loc
-    if (len(lat_a) + len(lon_a)) == 0:
-        out = "Your supplied location was not in our list or wrongly supplied!\n"
+        return ""
+    rep = requests.get(address + coords + "/ca24/" + lang)  # Actual request to url
+    html = rep.text  # Some HTML parsing magic
+    parsed = BeautifulSoup(html, "html.parser")  # Some HTML parsing magic
+    weather_p = parsed.find_all("span", "summary swap")  # Some HTML parsing magic
+    out = out + parse_weather_html(weather_p, "summary swap")  # remove span tag
+    out = out.replace("\xa0", "C ")  # Some weird html artifact used on the webpage, I just remove it here
+    out = out + "\n" + time_loc  # Some formating
+    if (len(lat_a) or len(lon_a)) == 0:  # If a location is supplied that was not found then this error is returned
+        out = "ERROR"
     return out
+
 
 # ------------------------------------------------------------------------------------------------------------
 
-
+# Update the weather in the status of the bot every 30 minutes
 @tasks.loop(minutes=30)
 async def weather_update():
-
     global location
     global language
-    weather_status = weather_func(location, language)
-    weather_status = weather_status[:32:]
-    weather_status = weather_status.split("\n")[0]
-    await bot.change_presence(activity=discord.Game(str(location).capitalize() + ": " + weather_status))
+    if DEBUG != 0:
+        # Used default / or last set location and language as parameters to get the weather
+        weather_status = weather_func(location, language)
+        weather_status = weather_status[:32:]  # Status is limited to 32 chars
+        weather_status = weather_status.split("\n")[0]  # We don't need to local time
+        await bot.change_presence(
+            activity=discord.Game(str(location).capitalize() + ": " + weather_status))  # Update status on bot
 
 
+# The actual weather command that is used with the bot
 @bot.command(pass_context=True, brief="Prints some weather data for some given parameters")
-@commands.cooldown(1, 0, commands.BucketType.user)
 async def weather(ctx, *args):
     global language
     global location
-    username = ctx.author.name
+    username = ctx.author.name # Get the username of the user who ran the command
     command = "!weather "
-    usage = "Usage: !weather <location> <en/de> \nLanguage is optional\nReturns the weather for the location in the choosen language"
-    title = "Ehmmmm"
-    tim = "The cake is a lie?!"
-    time_loc = "69 Nice"
-    img = "https://cdn.discordapp.com/emojis/550697172039893054.png?v=1"
-    weather_out = "WTF IS WRONG WITH YOU?!"
-    temp = "404 ad missing or is it?"
+    usage = "Usage: !weather <location> <en/de> \nLanguage is optional\n" \
+            "Returns the weather for the location in the choosen language"
 
-    if len(args) == 2:
+    if len(args) == 2:  # If command is of the form !weather <location> <en/de>
+        arg1 = args[0]  # Parse first argument of command
+        arg2 = args[1]  # Parse second argument of command
+        command = command + arg1 + " " + arg2
+        ret = weather_func(str(arg1), str(arg2))  # Call the weather function on the arguments
+
+        if DEBUG == 1: # Deactivate weather function if debug value is set
+            await ctx.send("The weather function is currently unavailable")
+            return
+
+        elif ret != "ERROR": # If no error occurred use this
+            if arg2 == "en" or arg2 == "de": # Check if a correct language was set
+                if arg2 == "en": # Set all language related stuff
+                    language = "en"
+                    title = "Weather in "
+                    temp = "Temperature"
+                    tim = "Local Time"
+                    command = command + arg1 + " en"
+
+                elif arg2 == "de": # Set all language related stuff
+                    language = "de"
+                    title = "Wetter in "
+                    temp = "Temperatur"
+                    tim = "Lokale Uhrzeit"
+                    command = command + arg1 + " de"
+
+                location = str(arg1).capitalize() # Capitalize location
+                title = title + location # Format title with location
+                img = get_weather_img(ret) # Get the image for the location
+                time_loc = ret.split("\n")[1] # Split return string to get local time
+                weather_out = ret.split("\n")[0] # Split return string to get weather
+                # Change bot status to the current weather
+                await bot.change_presence(activity=discord.Game(str(arg1).capitalize() + ": " + weather_out))
+
+                # Prepare and output embed with weather data
+                embed = discord.Embed(title=title, color=discord.Color.green())
+                embed.set_thumbnail(url=img)
+                embed.add_field(name=temp, value=weather_out, inline=True)
+                embed.add_field(name=tim, value=time_loc, inline=True)
+                await ctx.send(embed=embed)
+            else: # If no proper language was set use this
+                await ctx.send("Please use a valid language option! For help see !weather")
+
+        else: # If an error occurred use this
+            await ctx.send("Please use a valid language option! For help see !weather")
+
+    elif len(args) == 1:  # If command is of the form !weather <location>
         arg1 = args[0]
-        arg2 = args[1]
-        ret = weather_func(str(arg1), str(arg2))
-        if arg2 == "en" or arg2 == "de":
-            if arg2 == "en":
-                language = "en"
+        command = command + arg1
+        ret = weather_func(str(arg1), language)
+        if ret != "ERROR":  # If no error occurred use this path
+            if language == "en":  # the language was set to english
+                # Setting some value in english
                 title = "Weather in "
                 temp = "Temperature"
                 tim = "Local Time"
-                command = command + arg1 + " en"
 
-            if arg2 == "de":
-                language = "de"
+            if language == "de":  # the language was set to german
+                # Setting some value in german
                 title = "Wetter in "
                 temp = "Temperatur"
                 tim = "Lokale Uhrzeit"
-                command = command + arg1 + " de"
 
-            if ret == "The weather function is currently unavailable!":
-                embed = discord.Embed(title=title, color=discord.Color.green())
-                embed.add_field(name="ERROR", value="The weather function is currently unavailable!")
-                await ctx.send(embed=embed)
-                return
-
-            elif ret != "Your supplied location was not in our list or wrongly supplied!\n":
-                location = str(arg1).capitalize()
-                title = title + location
-                img = get_weather_img(ret)
-                time_loc = ret.split("\n")[1]
-                weather_out = ret.split("\n")[0]
-                await bot.change_presence(activity=discord.Game(str(arg1).capitalize() + ": " + weather_out))
-
-
-
+            location = str(arg1).capitalize()  # Capitalize location name
+            title = title + location  # Add location to the title
+            img = get_weather_img(ret)  # Retrieve image for the weather with the return value
+            time_loc = ret.split("\n")[1]  # Split the return string to get time string
+            weather_out = ret.split("\n")[0]  # Split the return string to get weather string
+            # Update the status of the bot
+            await bot.change_presence(activity=discord.Game(str(arg1).capitalize() + ": " + weather_out))
+            # Prepare and output embed to chat
             embed = discord.Embed(title=title, color=discord.Color.green())
             embed.set_thumbnail(url=img)
             embed.add_field(name=temp, value=weather_out, inline=True)
             embed.add_field(name=tim, value=time_loc, inline=True)
             await ctx.send(embed=embed)
 
-
-        else:
+        else:  # Something went wrong in the weather func
             await ctx.send("Please use a valid language option! For help see !weather")
-            command = command + arg1 + " " + arg2
 
-    elif len(args) == 1:
-        arg1 = args[0]
-        ret = weather_func(str(arg1), language)
-        if ret != "Your supplied location was not in our list or wrongly supplied!\n":
-            if language == "en":
-                title = "Weather in "
-                temp = "Temperature"
-                tim = "Local Time"
-
-            if language == "de":
-                title = "Wetter in "
-                temp = "Temperatur"
-                tim = "Lokale Uhrzeit"
-
-            command = command + arg1
-            location = str(arg1).capitalize()
-            title = title + location
-            img = get_weather_img(ret)
-            time_loc = ret.split("\n")[1]
-            weather_out = ret.split("\n")[0]
-            await bot.change_presence(activity=discord.Game(str(arg1).capitalize() + ": " + weather_out))
-
-        embed = discord.Embed(title=title, color=discord.Color.green())
-        embed.set_thumbnail(url=img)
-        embed.add_field(name=temp, value=weather_out, inline=True)
-        embed.add_field(name=tim, value=time_loc, inline=True)
-        await ctx.send(embed=embed)
-
-    elif len(args) == 0:
+    else:
         await ctx.send(usage)
-    log(username, command)
+
+    log(username, command) #Log user supplied command and username
+
 
 # ---------------------------------------------------------------------------------------------
-def parse_corona(string):
+def parse_corona_html(string):
     string = string[48::]
     string = string[::-1]
     string = string[8::]
     string = string[::-1]
     return string
+
 
 def get_imf_deutsch():
     global vaccinations
@@ -243,7 +252,7 @@ def get_imf_deutsch():
             html_data = req.text
             parsed = BeautifulSoup(html_data, "html.parser")
             numbers_a = parsed.find_all("p", "card-title")
-            impfungen = parse_corona(str(numbers_a[7]))
+            impfungen = parse_corona_html(str(numbers_a[7]))
             impfungen = impfungen.replace(".", "")
             ret = ret + int(impfungen)
         last_update = str(datetime.date.today())
@@ -252,28 +261,26 @@ def get_imf_deutsch():
         print(ret)
         ret = ret[::-1]
         out = ""
-        for i in range(0, len(ret)-3, 3):
-            out = out + ret[i:i+3] + "."
-        if not (len(ret)//3 == 0):
-            out = out + ret[len(ret)-(len(ret)//3)+1:len(ret)]
+        for i in range(0, len(ret) - 3, 3):
+            out = out + ret[i:i + 3] + "."
+        if not (len(ret) // 3 == 0):
+            out = out + ret[len(ret) - (len(ret) // 3) + 1:len(ret)]
         out = out[::-1]
         vaccinations = out
 
     return vaccinations
 
 
-
-
 @bot.command(pass_context=True, brief="Prints the current corona numbers for some given parameters")
 @commands.cooldown(1, 0, commands.BucketType.user)
 async def corona(ctx, *args):
-
     username = str(ctx.author.name)
     command = "!corona "
 
     corona_img = "https://cdn.cnn.com/cnnnext/dam/assets/200130165125-corona-virus-cdc-image-super-tease.jpg"
     dic = {"de/saar": "saarland", "de/thr": "thüringen", "de/saan": "sachsen-anhalt", "de/bra": "brandenburg",
-           "de/sa": "sachsen", "de/he": "hessen", "de/ber": "berlin", "de/bay": "bayern", "de/meckpom": "mecklenburg-vorpommern",
+           "de/sa": "sachsen", "de/he": "hessen", "de/ber": "berlin", "de/bay": "bayern",
+           "de/meckpom": "mecklenburg-vorpommern",
            "de/nrw": "nordrhein-westfalen", "de/shs": "schleswig-holstein", "de/rlp": "rheinland-pfalz",
            "de/bwb": "baden-württemberg", "de/ns": "niedersachsen", "de/ham": "hamburg", "de/bre": "bremen"}
 
@@ -297,15 +304,15 @@ async def corona(ctx, *args):
         html_data = req.text
         parsed = BeautifulSoup(html_data, "html.parser")
         numbers_a = parsed.find_all("p", "card-title")
-        einwohner = parse_corona(str(numbers_a[0]))
-        infektionen = parse_corona(str(numbers_a[1]))
-        infektionsrate = parse_corona(str(numbers_a[2]))
-        neuinfektionen_s_days = parse_corona(str(numbers_a[3]))
-        deaths = parse_corona(str(numbers_a[4]))
-        tödlichkeit = parse_corona(str(numbers_a[5]))
-        neuinfektionen = parse_corona(str(numbers_a[6]))
-        new_deaths = parse_corona(str(numbers_a[8]))
-        tests_insgesamt = parse_corona(str(numbers_a[9]))
+        einwohner = parse_corona_html(str(numbers_a[0]))
+        infektionen = parse_corona_html(str(numbers_a[1]))
+        infektionsrate = parse_corona_html(str(numbers_a[2]))
+        neuinfektionen_s_days = parse_corona_html(str(numbers_a[3]))
+        deaths = parse_corona_html(str(numbers_a[4]))
+        tödlichkeit = parse_corona_html(str(numbers_a[5]))
+        neuinfektionen = parse_corona_html(str(numbers_a[6]))
+        new_deaths = parse_corona_html(str(numbers_a[8]))
+        tests_insgesamt = parse_corona_html(str(numbers_a[9]))
         impf_gesamt = get_imf_deutsch();
         embed = discord.Embed(title="Corona Numbers Germany", color=discord.Color.red())
         embed.add_field(name="Population:", value=einwohner, inline=True)
@@ -328,13 +335,13 @@ async def corona(ctx, *args):
         html_data = req.text
         parsed = BeautifulSoup(html_data, "html.parser")
         numbers_a = parsed.find_all("p", "card-title")
-        einwohner = parse_corona(str(numbers_a[0]))
-        infektionen = parse_corona(str(numbers_a[1]))
-        infektionsrate = parse_corona(str(numbers_a[2]))
-        neuinfektionen_s_days = parse_corona(str(numbers_a[3]))
-        deaths = parse_corona(str(numbers_a[4]))
-        tödlichkeit = parse_corona(str(numbers_a[5]))
-        impfungen = parse_corona(str(numbers_a[7]))
+        einwohner = parse_corona_html(str(numbers_a[0]))
+        infektionen = parse_corona_html(str(numbers_a[1]))
+        infektionsrate = parse_corona_html(str(numbers_a[2]))
+        neuinfektionen_s_days = parse_corona_html(str(numbers_a[3]))
+        deaths = parse_corona_html(str(numbers_a[4]))
+        tödlichkeit = parse_corona_html(str(numbers_a[5]))
+        impfungen = parse_corona_html(str(numbers_a[7]))
 
         embed = discord.Embed(title="Corona Numbers Germany " + bundesland.capitalize(), color=discord.Color.red())
         embed.add_field(name="Population:", value=einwohner, inline=True)
@@ -353,9 +360,9 @@ async def corona(ctx, *args):
     log(username, command)
 
 
-def log(username,command):
+def log(username, command):
     global log_path
-    file = open(log_path,"a")
+    file = open(log_path, "a")
     time_now = str(datetime.datetime.now()).split(".")[0]
     out = "[" + time_now + "] " + username + ": " + command + "\n"
     file.write(out)
@@ -365,5 +372,6 @@ def log(username,command):
 async def on_ready():
     print("Hello. I am your bot and I am ready to operate!")
     weather_update.start()
+
 
 bot.run(TOKEN)
