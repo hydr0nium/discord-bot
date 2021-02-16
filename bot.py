@@ -36,7 +36,6 @@ def get_time_from_location(lat, lon):
 # Getting an image for the bot to display for the current weather
 def get_weather_img(info_uncut):
     info = info_uncut.split("C ")[1].split("\n")[0]
-    print(info)
     if info == "Stark bewölkt" or info == "Overcast":
         return "https://ssl.gstatic.com/onebox/weather/64/cloudy.png"
 
@@ -226,6 +225,7 @@ async def weather(ctx, *args):
 
 
 # ---------------------------------------------------------------------------------------------
+# Some parsing magic for the html tag <p class="card-title" style="font-size:30px"><b>string</b></p> --> string
 def parse_corona_html(string):
     string = string[48::]
     string = string[::-1]
@@ -259,6 +259,8 @@ def get_imf_deutsch():
 
         ret = str(ret)
         print(ret)
+
+        # GARBAGE ALERT WTF IS THIS ?!
         ret = ret[::-1]
         out = ""
         for i in range(0, len(ret) - 3, 3):
@@ -266,6 +268,7 @@ def get_imf_deutsch():
         if not (len(ret) // 3 == 0):
             out = out + ret[len(ret) - (len(ret) // 3) + 1:len(ret)]
         out = out[::-1]
+
         vaccinations = out
 
     return vaccinations
